@@ -134,7 +134,7 @@ sqlite:	$(TOP)/src/shell.c libsqlite.la sqlite.h
 # Rules to build the LEMON compiler generator
 #
 lemon:	$(TOP)/tool/lemon.c $(TOP)/tool/lempar.c
-	$(BCC) -o lemon $(TOP)/tool/lemon.c
+	$(BCC) -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -o lemon $(TOP)/tool/lemon.c
 	cp $(TOP)/tool/lempar.c .
 
 # Header files used by all library source files.

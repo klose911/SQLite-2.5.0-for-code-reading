@@ -1163,7 +1163,6 @@ int main(int argc, char **argv){
       }
     }
   }else{
-    extern int isatty();
     if( isatty(0) ){
       char *zHome;
       char *zHistory = 0;
