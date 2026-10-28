@@ -1,0 +1,110 @@
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# SQLite specific build artifacts
+sqlite
+testfixture
+tclsqlite
+lemon
+lempar.c
+sqlite.h
+parse.c
+parse.h
+parse.y
+parse.out
+*.tar.gz
+last_change
+
+# Libtool
+.libs/
+.deps/
+libtool
+
+# Autotools
+autom4te.cache/
+Makefile
+config.h
+config.log
+config.status
+stamp-h1
+
+# Test artifacts
+test.db
+*.db
+*.db-journal
+:memory:
+
+# Documentation generated
+doc/
+
+# Coverage and profiling
+*.gcno
+*.gcda
+*.gcov
+*.bb
+*.bbg
+gmon.out
+
+# Editor and IDE files
+*~
+*.swp
+*.swo
+.*.sw?
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+Thumbs.db
+
+# Compile commands for IDE integration (sometimes generated)
+compile_commands.json
