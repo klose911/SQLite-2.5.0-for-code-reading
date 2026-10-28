@@ -61,6 +61,8 @@ make doc               # Generate HTML documentation from www/*.tcl scripts
 
 Requires TCL. Outputs to `doc/` directory.
 
+**Note**: The `doc/` directory contains original source documentation (lemon.html, report1.txt) that is preserved during `make clean`. Only generated HTML files are removed.
+
 ## Architecture
 
 SQLite 2.5.0 has a layered architecture with clear separation of concerns:
