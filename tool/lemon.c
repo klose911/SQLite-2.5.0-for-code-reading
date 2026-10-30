@@ -10,13 +10,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-
-extern void qsort();
-extern double strtod();
-extern long strtol();
-extern void free();
-extern int access();
-extern int atoi();
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifndef __WIN32__
 #   if defined(_WIN32) || defined(WIN32)

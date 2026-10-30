@@ -134,7 +134,7 @@ sqlite:	$(TOP)/src/shell.c libsqlite.la sqlite.h
 # Rules to build the LEMON compiler generator
 #
 lemon:	$(TOP)/tool/lemon.c $(TOP)/tool/lempar.c
-	$(BCC) -o lemon $(TOP)/tool/lemon.c
+	$(BCC) -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -o lemon $(TOP)/tool/lemon.c
 	cp $(TOP)/tool/lempar.c .
 
 # Header files used by all library source files.
@@ -313,14 +313,21 @@ install:	sqlite libsqlite.la sqlite.h
 	$(LIBTOOL) $(INSTALL) sqlite $(prefix)/bin
 	$(INSTALL) -m 0644 sqlite.h $(prefix)/include
 
-clean:	
+clean:
 	rm -f *.lo *.la *.o sqlite libsqlite.la sqlite.h
-	rm -rf .libs .deps 
+	rm -rf .libs .deps
 	rm -f lemon lempar.c parse.* sqlite*.tar.gz
 	rm -f $(PUBLISH)
 	rm -f *.da *.bb *.bbg gmon.out
 	rm -f testfixture test.db
-	rm -rf doc
+	rm -f doc/index.html doc/sqlite.html doc/changes.html doc/lang.html
+	rm -f doc/opcode.html doc/arch.html doc/arch.png doc/vdbe.html
+	rm -f doc/c_interface.html doc/crosscompile.html doc/mingw.html
+	rm -f doc/tclsqlite.html doc/download.html doc/speed.html doc/faq.html
+	rm -f index.html sqlite.html changes.html lang.html opcode.html
+	rm -f arch.html arch.png vdbe.html c_interface.html
+	rm -f crosscompile.html mingw.html tclsqlite.html
+	rm -f download.html speed.html faq.html
 
 distclean:	clean
 	rm -f config.log config.status
