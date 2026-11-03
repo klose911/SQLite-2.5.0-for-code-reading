@@ -41,6 +41,11 @@
 ** procedures use this information to make sure that indices are
 ** working correctly.
 */
+/**
+ * 这个全局变量用于记录游标移动的次数
+ * 每当游标通过 OP_MoveTo 或 OP_Next 操作移动时，该变量会递增
+ * 用于测试索引是否正常工作。
+ */
 int sqlite_search_count = 0;
 
 /*
@@ -48,10 +53,15 @@ int sqlite_search_count = 0;
 ** executed by a virtual machine.  Each instruction is an instance
 ** of the following structure.
 */
+/**
+ * 虚拟数据库引擎的操作结构体
+ * 该结构体表示虚拟数据库引擎中的一条操作指令，包括操作码和操作数等信息
+ */
 typedef struct VdbeOp Op;
 
 /*
 ** Boolean values
+* 布尔值类型，使用 unsigned char 表示
 */
 typedef unsigned char Bool;
 
@@ -65,14 +75,33 @@ typedef unsigned char Bool;
 ** Every cursor that the virtual machine has open is represented by an
 ** instance of the following structure.
 */
+
+/*
+** 游标（Cursor）是指向数据库文件中某一个 BTree 的指针。
+** 游标可以根据指定的键（Key）定位到 BTree 中的某个条目，
+** 也可以遍历 BTree 中的所有条目。
+** 此外，还可以通过游标插入新的 BTree 条目，
+** 或者获取游标当前所指向条目的键（Key）或数据（Data）。
+**
+** 虚拟机（Virtual Machine）中每一个处于打开状态的游标，
+** 都由以下结构体的一个实例来表示。
+*/
 struct Cursor {
-  BtCursor *pCursor;    /* The cursor structure of the backend */
-  int lastRecno;        /* Last recno from a Next or NextIdx operation */
+  // 后端BTree游标的指针
+  BtCursor *pCursor;    /* The cursor structure of the backend */ 
+  // 上一次通过 Next 或 NextIdx 操作访问的记录号
+  int lastRecno;        /* Last recno from a Next or NextIdx operation */ 
+  // lastRecno 是否有效
   Bool recnoIsValid;    /* True if lastRecno is valid */
+  // OP_Column 命令是否作用于键而非数据
   Bool keyAsData;       /* The OP_Column command works on key instead of data */
+  // 是否指向第一个条目
   Bool atFirst;         /* True if pointing to first entry */
+  // 是否使用半随机生成新的记录号
   Bool useRandomRowid;  /* Generate new record numbers semi-randomly */
+  // 是否指向没有数据的行
   Bool nullRow;         /* True if pointing to a row with no data */
+  // 临时表所在的独立文件
   Btree *pBt;           /* Separate file holding temporary table */
 };
 typedef struct Cursor Cursor;
@@ -81,17 +110,27 @@ typedef struct Cursor Cursor;
 ** A sorter builds a list of elements to be sorted.  Each element of
 ** the list is an instance of the following structure.
 */
+/**
+ * 排序器（Sorter）用于构建一个待排序元素的列表
+ * 列表中的每个元素由以下结构体表示。
+ */
 typedef struct Sorter Sorter;
 struct Sorter {
+  // 键的字节数
   int nKey;           /* Number of bytes in the key */
+  // 用于排序的键
   char *zKey;         /* The key by which we will sort */
+  // 数据的字节数
   int nData;          /* Number of bytes in the data */
+  // 与该键关联的数据
   char *pData;        /* The data associated with this key */
+  // 指向列表中的下一个元素
   Sorter *pNext;      /* Next in the list */
 };
 
 /* 
-** Number of buckets used for merge-sort.  
+** Number of buckets used for merge-sort.  合并排序使用的桶数量
+** 
 */
 #define NSORT 30
 
@@ -99,6 +138,9 @@ struct Sorter {
 ** Number of bytes of string storage space available to each stack
 ** layer without having to malloc.  NBFS is short for Number of Bytes
 ** For Strings.
+** 
+** 每个栈层可用的字符串存储空间字节数，无需调用 malloc。
+** NBFS 是 Number of Bytes For Strings 的缩写。
 */
 #define NBFS 32
 
@@ -109,39 +151,63 @@ struct Sorter {
 ** strings separately is so that they can be easily passed
 ** to the callback function.
 */
+/**
+ * 栈的单个层由以下结构体表示。
+ * 除了整数、实数等值外，字符串值存储在单独的字符指针列表中。
+ * 这样做的原因是字符串可以方便地传递给回调函数
+ */
 struct Stack {
+  // 整数值
   int i;         /* Integer value */
+  // 字符串值的字符数，包括终止符 '\0'
   int n;         /* Number of characters in string value, including '\0' */
+  // 标志，可能是 STK_Null、STK_Str、STK_Dyn 等的组合
   int flags;     /* Some combination of STK_Null, STK_Str, STK_Dyn, etc. */
+  // 实数值
   double r;      /* Real value */
+  // 短字符串的存储空间，用于存放不超过 NBFS 字节的字符串
   char z[NBFS];  /* Space for short strings */
 };
-typedef struct Stack Stack;
+typedef struct Stack Stack; // 栈的单个层的类型定义
 
 /*
 ** Memory cells use the same structure as the stack except that space
 ** for an arbitrary string is added.
 */
+/**
+ * 内存单元（Memory cell）使用与栈相同的结构，除了为任意字符串增加了存储空间。
+ */
 struct Mem {
+  // 内存单元的值，除了字符串外的所有值
   Stack s;       /* All values of the memory cell besides string */
+  // 内存单元的字符串值
   char *z;       /* String value for this memory cell */
 };
-typedef struct Mem Mem;
+typedef struct Mem Mem; // 内存单元的类型定义
 
 /*
 ** Allowed values for Stack.flags
+** 栈标志的允许值
+** 可能的值包括 STK_Null、STK_Str、STK_Int、STK_Real、STK_Dyn、STK_Static 等
+** 这些标志用于指示栈中存储的值的类型和状态
+** 
 */
-#define STK_Null      0x0001   /* Value is NULL */
-#define STK_Str       0x0002   /* Value is a string */
-#define STK_Int       0x0004   /* Value is an integer */
-#define STK_Real      0x0008   /* Value is a real number */
+#define STK_Null      0x0001   /* Value is NULL */ // 值为 NULL
+#define STK_Str       0x0002   /* Value is a string */ // 值为字符串
+#define STK_Int       0x0004   /* Value is an integer */ // 值为整数
+#define STK_Real      0x0008   /* Value is a real number */ // 值为实数
+// 需要对 zStack[*] 调用 sqliteFree()
 #define STK_Dyn       0x0010   /* Need to call sqliteFree() on zStack[*] */
-#define STK_Static    0x0020   /* zStack[] points to a static string */
+// zStack[] 指向静态字符串 
+#define STK_Static    0x0020   /* zStack[] points to a static string */ 
 
 /* The following STK_ value appears only in AggElem.aMem.s.flag fields.
 ** It indicates that the corresponding AggElem.aMem.z points to a
 ** aggregate function context that needs to be finalized.
 */
+// 这个标志只出现在 AggElem.aMem.s.flags 字段中
+// 表示对应的 AggElem.aMem.z 指向一个需要被最终处理的聚合函数上下文
+// 该标志用于指示 AggElem.aMem.z 所指向的聚合函数上下文需要被最终处理
 #define STK_AggCtx    0x0040   /* zStack[] points to an agg function context */
 
 /*
@@ -157,13 +223,27 @@ typedef struct Mem Mem;
 ** This structure is defined inside of vdbe.c because it uses substructures
 ** (Stack) which are only defined there.
 */
+/**
+ * SQL函数结构体
+ * 
+ * typedef 定义在 sqlite.h 文件，所有接口，甚至公开接口都可以使用这个结构体的指针，
+ * 但是真实实现只在当前文件内。这是因为它使用到的子结构体 Stack 被定义在这里 
+ * 
+ */
 struct sqlite_func {
+  // SQL函数的指针，必须定义在第一伟
   FuncDef *pFunc;   /* Pointer to function information.  MUST BE FIRST */
+  // 小的字符串、整数和双精度值存放在这里
   Stack s;          /* Small strings, ints, and double values go here */
+  // 动态字符串结果的存储空间
   char *z;          /* Space for holding dynamic string results */
+  // 聚合函数的上下文
   void *pAgg;       /* Aggregate context */
+  // 是否发生错误
   u8 isError;       /* Set to true for an error */
+  // 当前是否在 step 函数中
   u8 isStep;        /* Current in the step function */
+  // step 函数被调用的次数
   int cnt;          /* Number of times that the step function has been called */
 };
 
@@ -174,18 +254,33 @@ struct sqlite_func {
 ** aggregate functions in a SELECT.  The key is used to implement
 ** the GROUP BY clause of a select.
 */
-typedef struct Agg Agg;
-typedef struct AggElem AggElem;
+/**
+ * 聚合器结构体，描述了一个聚合器
+ * 每个聚合器由零个或多个聚合元素（AggElem）组成
+ * 每个聚合元素包含一个键和一个或多个值
+ * 值用于处理 SELECT 中的聚合函数
+ * 键用于实现 SELECT 的 GROUP BY 子句
+ */
+typedef struct Agg Agg; // 聚合器结构体
+typedef struct AggElem AggElem; // 聚合元素结构体
 struct Agg {
+  // 多少个元素保存在每个 AggElem 中
   int nMem;            /* Number of values stored in each AggElem */
+  // 当前聚合元素
   AggElem *pCurrent;   /* The AggElem currently in focus */
+  // 用于 pCurrent 的哈希元素
   HashElem *pSearch;   /* The hash element for pCurrent */
+  // 所有聚合元素的哈希表
   Hash hash;           /* Hash table of all aggregate elements */
+  // 聚合函数的信息数组
   FuncDef **apFunc;    /* Information about aggregate functions */
 };
 struct AggElem {
+  // 聚合元素的键
   char *zKey;          /* The key to this AggElem */
+  // 键的长度，包括末尾的 '\0' 字符
   int nKey;            /* Number of bytes in the key, including '\0' at end */
+  // 聚合元素的值
   Mem aMem[1];         /* The values for this AggElem */
 };
 
@@ -195,9 +290,16 @@ struct AggElem {
 ** this:
 **            x.y IN ('hi','hoo','hum')
 */
+
+/**
+ * 集合结构体，用于快速测试一个值是否属于一个小集合
+ * 集合用于实现类似 x.y IN ('hi','hoo','hum') 的代码
+ */
 typedef struct Set Set;
 struct Set {
+  // 哈希表，用于快速判断值是否在集合中
   Hash hash;             /* A set is just a hash table */
+  // 上一次访问的哈希元素
   HashElem *prev;        /* Previously accessed hash elemen */
 };
 
@@ -206,51 +308,94 @@ struct Set {
 ** grow without bound.  The keylist stores the ROWIDs of database
 ** records that need to be deleted or updated.
 */
+/**
+ * 键列表结构体，用于存储需要删除或更新的数据库记录的 ROWID
+ * 键列表可以动态增长，存储需要处理的 ROWID
+ */
 typedef struct Keylist Keylist;
 struct Keylist {
+  // 键列表中键的数量
   int nKey;         /* Number of slots in aKey[] */
+  // 下一个未写入的槽
   int nUsed;        /* Next unwritten slot in aKey[] */
+  // 下一个未读取的槽
   int nRead;        /* Next unread slot in aKey[] */
+  // 下一个块的指针
   Keylist *pNext;   /* Next block of keys */
+  // 键数组，存储实际的键值
   int aKey[1];      /* One or more keys.  Extra space allocated as needed */
 };
 
 /*
 ** An instance of the virtual machine
+** 虚拟机实例，包含执行 SQL 语句所需的各种状态信息
 */
 struct Vdbe {
+  // 数据库指针
   sqlite *db;         /* The whole database */
+  // 数据库后端的上下文结构
   Btree *pBt;         /* Opaque context structure used by DB backend */
+  // 执行跟踪文件指针，如果不为 NULL，则写入执行跟踪
   FILE *trace;        /* Write an execution trace here, if not NULL */
+  // 需要执行的指令数目
   int nOp;            /* Number of instructions in the program */
+  // 分配给aoP列表的槽数量
   int nOpAlloc;       /* Number of slots allocated for aOp[] */
+  // 存放虚拟机执行指令的列表
   Op *aOp;            /* Space to hold the virtual machine's program */
+  // 标签数量
   int nLabel;         /* Number of labels used */
+  // 分配给aLabel链表的槽数量
   int nLabelAlloc;    /* Number of slots allocated in aLabel[] */
+  // 存放标签的链表
   int *aLabel;        /* Space to hold the labels */
+  // 栈顶位置索引
   int tos;            /* Index of top of stack */
+  // 栈的分配大小
   int nStackAlloc;    /* Size of the stack */
+  // 操作数栈，除字符串值外
   Stack *aStack;      /* The operand stack, except string values */
+  // 栈中字符串或二进制值
   char **zStack;      /* Text or binary values of the stack */
+  // 列名数组，作为回调函数的第四个参数
   char **azColName;   /* Becomes the 4th parameter to callbacks */
+  // 游标数量
   int nCursor;        /* Number of slots in aCsr[] */
+  // 游标链表，每个打开的游标对应一个元素
   Cursor *aCsr;       /* One element of this array for each open cursor */
+  // ROWID 列表
   Keylist *pList;     /* A list of ROWIDs */
+  // 排序对象链表
   Sorter *pSort;      /* A linked list of objects to be sorted */
+  // 文件指针，最多一个打开的文件
   FILE *pFile;        /* At most one open file handler */
+  // 文件字段数量
   int nField;         /* Number of file fields */
+  // 每个文件字段的数据
   char **azField;     /* Data for each file field */
+  // 输入文件中的一行
   char *zLine;        /* A single line from the input file */
+  // 为 zLine 分配的空间数量
   int nLineAlloc;     /* Number of spaces allocated for zLine */
+  // 现在为止分配的内存大小
   int nMem;           /* Number of memory locations currently allocated */
+  // 内存链表
   Mem *aMem;          /* The memory locations */
+  // 聚合参数信息
   Agg agg;            /* Aggregate information */
+  // 集合数量
   int nSet;           /* Number of sets allocated */
+  // 集合链表
   Set *aSet;          /* An array of sets */
+  // 回调的数量
   int nCallback;      /* Number of callbacks invoked so far */
+  // 回调剩余的限制
   int iLimit;         /* Limit on the number of callbacks remaining */
+  // 回调的偏移量
   int iOffset;        /* Offset before beginning to do callbacks */
+  // keylist 栈的深度
   int keylistStackDepth;  /* The size of the "keylist" stack */
+  // keylist 栈，用于 ListPush 和 ListPop 操作码
   Keylist **keylistStack; /* The stack used by opcodes ListPush & ListPop */
 };
 
